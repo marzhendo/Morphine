@@ -5,6 +5,6 @@ import App from "./App";
 describe("App Smoke Test", () => {
   it("renders the Morphine title", () => {
     render(<App />);
-    expect(screen.getByRole("heading", { name: /Morphine/i })).toBeInTheDocument();
+    expect(screen.getByText("Morphine")).toBeInTheDocument();
   });
 });
