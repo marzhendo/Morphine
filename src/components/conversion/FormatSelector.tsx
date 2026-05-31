@@ -27,6 +27,11 @@ export function FormatSelector({ inputFormat, selectedFormat, onChange, disabled
           {fmt}
         </button>
       ))}
+      {(inputFormat === "xlsx" || inputFormat === "pptx") && selectedFormat === "pdf" && (
+        <p className="text-[9px] text-terminal-warn-text tracking-wide mt-1.5 w-full">
+          ⚠ layout may vary — complex formatting not guaranteed
+        </p>
+      )}
     </div>
   );
 }
