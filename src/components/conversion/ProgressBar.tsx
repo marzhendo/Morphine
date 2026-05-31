@@ -1,17 +1,16 @@
-import { clsx } from "clsx";
 import type { JobStatus } from "@/types/conversion";
 
-interface ProgressBarProps { percent: number; status: JobStatus; }
-
-export function ProgressBar({ percent, status }: ProgressBarProps) {
-  const trackColor = status === "error" ? "bg-state-error/20" : "bg-surface-700";
-  const fillColor  = status === "error" ? "bg-state-error" : status === "done" ? "bg-state-success" : "bg-brand-500";
+export function ProgressBar({ percent, status }: { percent: number; status: JobStatus }) {
+  const fillCls = status === "error" ? "bg-terminal-err-text" : "bg-terminal-accent glow-accent";
   return (
-    <div className={clsx("w-full h-1 rounded-full overflow-hidden", trackColor)}>
+    <div className="w-full h-0.5 bg-terminal-border">
       <div
-        className={clsx("h-full rounded-full transition-all duration-300 ease-out", fillColor)}
+        className={`h-0.5 transition-all duration-300 ${fillCls}`}
         style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
-        role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}
+        role="progressbar"
+        aria-valuenow={percent}
+        aria-valuemin={0}
+        aria-valuemax={100}
       />
     </div>
   );

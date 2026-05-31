@@ -13,6 +13,10 @@ vi.mock("@tauri-apps/plugin-shell", () => ({
   open: vi.fn(() => Promise.resolve()),
 }));
 
+vi.mock("@tauri-apps/plugin-opener", () => ({
+  openPath: vi.fn(() => Promise.resolve()),
+}));
+
 // Mock Tool Status queries globally to prevent react-query boundary failures in JSDOM tests
 vi.mock("@/hooks/useToolStatus", () => ({
   useToolStatus: vi.fn(() => ({

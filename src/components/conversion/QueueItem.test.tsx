@@ -28,41 +28,41 @@ function makeJob(overrides: Partial<ConversionJob> = {}): ConversionJob {
 }
 
 describe("QueueItem Component Tests", () => {
-  it("Idle state — renders filename, shows Convert button, shows FormatSelector", () => {
+  it("Idle state — renders filename, shows run → button, shows FormatSelector", () => {
     const job = makeJob({ status: "idle" });
     render(<QueueItem job={job} onRemove={vi.fn()} />);
 
     expect(screen.getByText("document.docx")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Convert/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /run/i })).toBeInTheDocument();
     // Verify format buttons exist (e.g. PDF selection)
-    expect(screen.getByRole("button", { name: "PDF" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "pdf" })).toBeInTheDocument();
   });
 
-  it("Converting state — renders filename, shows progress bar, shows Cancel button, does NOT show Convert", () => {
+  it("Converting state — renders filename, shows progress bar, shows cancel button, does NOT show run →", () => {
     const job = makeJob({ status: "converting", progress: 45 });
     render(<QueueItem job={job} onRemove={vi.fn()} />);
 
     expect(screen.getByText("document.docx")).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Convert/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /run/i })).not.toBeInTheDocument();
   });
 
-  it("Done state — renders filename, shows Open button, does NOT show Convert", () => {
+  it("Done state — renders filename, shows open button, does NOT show run →", () => {
     const job = makeJob({ status: "done" });
     render(<QueueItem job={job} onRemove={vi.fn()} />);
 
     expect(screen.getByText("document.docx")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Open/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Convert/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /open/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /run/i })).not.toBeInTheDocument();
   });
 
-  it("Error state — renders filename, shows error message, shows Retry button", () => {
+  it("Error state — renders filename, shows error message, shows retry button", () => {
     const job = makeJob({ status: "error", error: "Conversion failed" });
     render(<QueueItem job={job} onRemove={vi.fn()} />);
 
     expect(screen.getByText("document.docx")).toBeInTheDocument();
-    expect(screen.getByText("Conversion failed")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Retry/i })).toBeInTheDocument();
+    expect(screen.getByText(/Conversion failed/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
   });
 });

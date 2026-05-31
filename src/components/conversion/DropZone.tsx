@@ -1,34 +1,48 @@
 import { useEffect, useState } from "react";
-import { clsx } from "clsx";
 import { listen } from "@tauri-apps/api/event";
+import { open } from "@tauri-apps/plugin-dialog";
 import { getAllowedOutputFormats, detectFormat } from "@/lib/formatUtils";
 
-interface DropZoneProps { onFilesDropped: (paths: string[]) => void; }
-
-export function DropZone({ onFilesDropped }: DropZoneProps) {
+export function DropZone({ onFilesDropped }: { onFilesDropped: (paths: string[]) => void }) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError]           = useState<string | null>(null);
 
-  useEffect(() => {
-    const unlistenHover = listen<string[]>("tauri://drag-over", () => {
-      setIsDragging(true);
-      setError(null);
-    });
-    const unlistenDrop = listen<{ paths: string[] }>("tauri://drag-drop", (event) => {
-      setIsDragging(false);
-      const validPaths = event.payload.paths.filter((path) => {
-        try { return getAllowedOutputFormats(detectFormat(path)).length > 0; }
-        catch { return false; }
+  const handleBrowseFiles = async () => {
+    setError(null);
+    try {
+      const selected = await open({
+        multiple: true,
+        filters: [{
+          name: 'Supported Files',
+          extensions: ['docx', 'pdf', 'xlsx', 'pptx', 'jpg', 'jpeg', 'png', 'webp', 'bmp']
+        }]
       });
-      if (validPaths.length === 0) {
+      if (selected && Array.isArray(selected)) {
+        onFilesDropped(selected);
+      } else if (typeof selected === "string") {
+        onFilesDropped([selected]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  useEffect(() => {
+    const unlistenHover = listen("tauri://drag-over", () => { setIsDragging(true); setError(null); });
+    const unlistenDrop  = listen<{ paths: string[] }>("tauri://drag-drop", (event) => {
+      setIsDragging(false);
+      const valid = event.payload.paths.filter((p) => {
+        try { return getAllowedOutputFormats(detectFormat(p)).length > 0; } catch { return false; }
+      });
+      if (valid.length === 0) {
         setError(event.payload.paths.length === 1
-          ? "Unsupported file format. Try .docx, .pdf, .xlsx, .pptx, or common image files."
-          : `None of the ${event.payload.paths.length} files are in a supported format.`);
+          ? "ERR: unsupported format — try .docx .pdf .xlsx .pptx .jpg .png .webp .bmp"
+          : `ERR: none of ${event.payload.paths.length} files are supported`);
         return;
       }
-      if (validPaths.length < event.payload.paths.length)
-        setError(`${event.payload.paths.length - validPaths.length} unsupported file(s) skipped.`);
-      onFilesDropped(validPaths);
+      if (valid.length < event.payload.paths.length)
+        setError(`WARN: ${event.payload.paths.length - valid.length} unsupported file(s) skipped`);
+      onFilesDropped(valid);
     });
     const unlistenLeave = listen("tauri://drag-leave", () => setIsDragging(false));
     return () => {
@@ -39,24 +53,37 @@ export function DropZone({ onFilesDropped }: DropZoneProps) {
   }, [onFilesDropped]);
 
   return (
-    <div className={clsx(
-      "relative flex flex-col items-center justify-center gap-3",
-      "w-full rounded-2xl border-2 border-dashed transition-all duration-200 py-12 px-8",
-      isDragging ? "border-brand-500 bg-brand-500/5 scale-[1.01]" : "border-surface-700 bg-surface-900/50 hover:border-surface-600"
-    )}>
-      <div className={clsx(
-        "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-colors",
-        isDragging ? "bg-brand-500/15 text-brand-400" : "bg-surface-800 text-white/30"
-      )}>
-        {isDragging ? "↓" : "⊕"}
-      </div>
-      <div className="text-center">
-        <p className={clsx("text-sm font-medium transition-colors", isDragging ? "text-brand-300" : "text-white/60")}>
-          {isDragging ? "Release to add files" : "Drop files here"}
-        </p>
-        <p className="text-xs text-white/30 mt-1">DOCX · PDF · XLSX · PPTX · JPG · PNG · WEBP · BMP</p>
-      </div>
-      {error && <p className="text-xs text-state-warning/80 text-center max-w-xs animate-fade-in">{error}</p>}
+    <div className={`relative flex flex-col items-center justify-center gap-2 py-10 px-6 border transition-colors ${
+      isDragging ? "border-terminal-accent bg-terminal-accent-glow" : "border-dashed border-terminal-border2 hover:border-terminal-accent"
+    }`}>
+      {/* Corner brackets */}
+      <span className="absolute top-1.5 left-1.5 w-2 h-2 border-t border-l border-terminal-muted" />
+      <span className="absolute top-1.5 right-1.5 w-2 h-2 border-t border-r border-terminal-muted" />
+      <span className="absolute bottom-1.5 left-1.5 w-2 h-2 border-b border-l border-terminal-muted" />
+      <span className="absolute bottom-1.5 right-1.5 w-2 h-2 border-b border-r border-terminal-muted" />
+
+      <span className={`text-2xl font-bold leading-none transition-colors ${isDragging ? "text-terminal-accent glow-text" : "text-terminal-muted"}`}>
+        {isDragging ? "[↓]" : "[+]"}
+      </span>
+      <span className={`text-[11px] transition-colors ${isDragging ? "text-terminal-accent" : "text-terminal-text"}`}>
+        {isDragging ? "release to add files" : "drop files here"}
+      </span>
+      {!isDragging && (
+        <button
+          onClick={handleBrowseFiles}
+          className="text-[9px] tracking-widest px-2.5 py-1 border border-terminal-border2 text-terminal-muted hover:border-terminal-accent hover:text-terminal-accent transition-colors font-bold mt-1 cursor-pointer"
+        >
+          [browse files]
+        </button>
+      )}
+      <span className="text-[9px] text-terminal-dim tracking-widest uppercase">
+        docx · pdf · xlsx · pptx · jpg · png · webp · bmp
+      </span>
+      {error && (
+        <span className="text-[10px] text-terminal-warn-text text-center max-w-xs animate-fade-in">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

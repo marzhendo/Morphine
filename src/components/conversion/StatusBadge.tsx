@@ -1,21 +1,18 @@
-import { clsx } from "clsx";
 import type { JobStatus } from "@/types/conversion";
 
-interface StatusBadgeProps { status: JobStatus; }
-
-const STATUS_CONFIG: Record<JobStatus, { label: string; classes: string }> = {
-  idle:       { label: "Idle",       classes: "bg-surface-700 text-white/50" },
-  queued:     { label: "Queued",     classes: "bg-surface-600 text-white/70" },
-  converting: { label: "Converting", classes: "bg-brand-500/20 text-brand-300 animate-pulse-slow" },
-  done:       { label: "Done",       classes: "bg-state-success/15 text-state-success" },
-  error:      { label: "Error",      classes: "bg-state-error/15 text-state-error" },
-  cancelled:  { label: "Cancelled",  classes: "bg-surface-700 text-white/40" },
+const STATUS_CONFIG: Record<JobStatus, { label: string; cls: string }> = {
+  idle:       { label: "idle",     cls: "border-terminal-border2 text-terminal-muted" },
+  queued:     { label: "queued",   cls: "border-terminal-border2 text-terminal-muted" },
+  converting: { label: "running",  cls: "border-terminal-accent text-terminal-accent animate-pulse-slow" },
+  done:       { label: "done",     cls: "border-terminal-accent text-terminal-accent" },
+  error:      { label: "error",    cls: "border-terminal-err text-terminal-err-text" },
+  cancelled:  { label: "cancelled",cls: "border-terminal-border2 text-terminal-muted" },
 };
 
-export function StatusBadge({ status }: StatusBadgeProps) {
-  const { label, classes } = STATUS_CONFIG[status];
+export function StatusBadge({ status }: { status: JobStatus }) {
+  const { label, cls } = STATUS_CONFIG[status];
   return (
-    <span className={clsx("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", classes)}>
+    <span className={`text-[9px] tracking-widest uppercase px-2 py-0.5 border font-bold flex-shrink-0 ${cls}`}>
       {label}
     </span>
   );
