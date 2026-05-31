@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/plugin-shell";
+import { openPath } from "@tauri-apps/plugin-opener";
 import { v4 as uuidv4 } from "uuid";
 import { useConversionStore } from "@/store/conversionStore";
 import type {
@@ -12,14 +12,19 @@ import type {
   FileFormat,
 } from "@/types/conversion";
 import { detectFormat, resolveOutputPath, getEngine } from "@/lib/formatUtils";
+import { useSettingsStore } from "@/store/settingsStore";
 
 export function useConversion() {
   const { addJob, updateProgress, setResult, setStatus } = useConversionStore();
+  const { settings } = useSettingsStore();
 
   const startConversion = useCallback(
-    async (inputPath: string, outputFormat: FileFormat, outputDir?: string) => {
+    async (inputPath: string, outputFormat: FileFormat) => {
       const id          = uuidv4();
       const inputFormat = detectFormat(inputPath);
+      const outputDir = settings.defaultOutputDir === "custom" && settings.customOutputDir
+        ? settings.customOutputDir
+        : undefined;
       const outputPath  = resolveOutputPath(inputPath, outputFormat, outputDir);
       const engine      = getEngine(inputFormat, outputFormat);
 
@@ -72,7 +77,7 @@ export function useConversion() {
         unlisten();
       }
     },
-    [addJob, updateProgress, setResult, setStatus]
+    [addJob, updateProgress, setResult, setStatus, settings]
   );
 
   const cancelConversion = useCallback(
@@ -88,7 +93,7 @@ export function useConversion() {
   );
 
   const openOutputFile = useCallback(async (outputPath: string) => {
-    await open(outputPath);
+    await openPath(outputPath);
   }, []);
 
   return { startConversion, cancelConversion, openOutputFile };

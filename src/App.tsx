@@ -4,8 +4,10 @@ import { useConversionStore } from "@/store/conversionStore";
 import { DropZone } from "@/components/conversion/DropZone";
 import { ConversionQueue } from "@/components/conversion/ConversionQueue";
 import { ToolStatusBanner } from "@/components/layout/ToolStatusBanner";
+import { OutputDirSelector } from "@/components/layout/OutputDirSelector";
 import { detectFormat, getAllowedOutputFormats, getEngine } from "@/lib/formatUtils";
 import type { ConversionJob } from "@/types/conversion";
+import { useToolStatus } from "@/hooks/useToolStatus";
 
 export default function App() {
   const { addJob } = useConversionStore();
@@ -30,37 +32,68 @@ export default function App() {
         };
         addJob(job);
       } catch {
-        // detectFormat threw — file already filtered by DropZone, skip silently
+        // unsupported format — already filtered by DropZone
       }
     }
   }, [addJob]);
 
   return (
-    <div className="flex flex-col h-screen bg-surface-950 text-white">
-      {/* Header — draggable region for Tauri window */}
-      <header className="drag-region flex items-center justify-between px-5 py-3.5 border-b border-surface-800 flex-shrink-0">
-        <div className="flex items-center gap-2.5 no-drag">
-          <div className="w-6 h-6 rounded-lg bg-brand-500 flex items-center justify-center text-xs font-bold text-white">M</div>
-          <span className="text-sm font-semibold tracking-tight">Morphine</span>
-          <span className="text-xs text-white/30">Transform anything, instantly.</span>
+    <div className="flex flex-col h-screen bg-terminal-bg text-terminal-bright">
+      {/* Header */}
+      <header className="drag-region flex items-center justify-between px-4 py-3 border-b border-terminal-border bg-terminal-card flex-shrink-0">
+        <div className="no-drag flex items-center gap-3">
+          <span className="text-terminal-accent font-bold text-sm tracking-tight glow-text">
+            ~/morphine $
+          </span>
+          <span className="text-terminal-bright text-sm font-bold tracking-widest">morphine</span>
+          <span className="inline-block w-2 h-3.5 bg-terminal-accent animate-blink glow-accent" />
         </div>
+        <ToolStatusHeader />
       </header>
 
-      {/* Main content — scrollable */}
+      {/* Body */}
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-5 py-5 flex flex-col gap-4">
-          {/* Tool warnings */}
+        <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-3">
           <ToolStatusBanner />
-
-          {/* Conversion queue */}
+          <OutputDirSelector />
           <ConversionQueue />
-
-          {/* Drop zone — always visible */}
           <div className="no-drag">
             <DropZone onFilesDropped={handleFilesDropped} />
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function ToolStatusHeader() {
+  return <ToolStatusPills />;
+}
+
+function ToolStatusPills() {
+  const { data: tools } = useToolStatus();
+  const TOOLS = [
+    { key: "libreoffice", label: "LO" },
+    { key: "imagemagick", label: "IM" },
+    { key: "ghostscript", label: "GS" },
+  ];
+  return (
+    <div className="no-drag flex items-center gap-2">
+      {TOOLS.map(({ key, label }) => {
+        const ready = tools?.find(([n]: [string, boolean]) => n === key)?.[1] ?? false;
+        return (
+          <span
+            key={key}
+            className={`text-[9px] tracking-widest px-2 py-0.5 border font-bold ${
+              ready
+                ? "border-terminal-accent text-terminal-accent"
+                : "border-terminal-border text-terminal-border"
+            }`}
+          >
+            {label}:{ready ? "ok" : "err"}
+          </span>
+        );
+      })}
     </div>
   );
 }
