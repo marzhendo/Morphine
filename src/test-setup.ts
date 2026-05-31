@@ -1,11 +1,27 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
-// Mock Tauri APIs globally for the test environment (JSDOM)
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn().mockResolvedValue("Mocked Greet"),
+vi.mock("@tauri-apps/api/event", () => ({
+  listen: vi.fn(() => Promise.resolve(() => {})),
 }));
 
-vi.mock("@tauri-apps/api/event", () => ({
-  listen: vi.fn().mockResolvedValue(() => {}),
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(() => Promise.resolve([])),
+}));
+
+vi.mock("@tauri-apps/plugin-shell", () => ({
+  open: vi.fn(() => Promise.resolve()),
+}));
+
+// Mock Tool Status queries globally to prevent react-query boundary failures in JSDOM tests
+vi.mock("@/hooks/useToolStatus", () => ({
+  useToolStatus: vi.fn(() => ({
+    data: [
+      ["libreoffice", true],
+      ["imagemagick", true],
+      ["ghostscript", true],
+    ],
+    isLoading: false,
+  })),
+  useIsLibreOfficeReady: vi.fn(() => true),
 }));
