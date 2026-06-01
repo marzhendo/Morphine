@@ -10,6 +10,10 @@ impl ToolRegistry {
         PathBuf::from(app_data).join("Morphine").join("tools")
     }
 
+    pub fn tools_dir_pub() -> PathBuf {
+        Self::tools_dir()
+    }
+
     pub fn libreoffice() -> Result<PathBuf, MorphineError> {
         let path = Self::tools_dir()
             .join("LibreOfficePortable")  // <-- kapital, sesuai folder aktual

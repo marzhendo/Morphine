@@ -52,3 +52,13 @@ pub async fn get_tool_status() -> Result<Vec<(String, bool)>, String> {
         ("ghostscript".to_string(), ghostscript_ready),
     ])
 }
+
+#[tauri::command]
+pub async fn download_tool(
+    app: tauri::AppHandle,
+    tool_name: String,
+) -> Result<(), String> {
+    crate::downloader::download_and_install(app, tool_name)
+        .await
+        .map_err(|e| e.to_string())
+}

@@ -23,3 +23,12 @@ pub struct ConversionResult {
     pub output_path: Option<String>,
     pub error: Option<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DownloadProgress {
+    pub tool:       String,
+    pub percent:    u8,
+    pub message:    String,
+    pub bytes_done: u64,
+    pub bytes_total: u64,
+}
