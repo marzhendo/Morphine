@@ -6,6 +6,7 @@
 # will have schema files for capabilities auto-completion
 /gen/schemas
 
-.agent
-
-.antigravity
+# Antigravity
+.agent/
+.antigravity/
+/agent/workflows/

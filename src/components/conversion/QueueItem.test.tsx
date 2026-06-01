@@ -65,4 +65,15 @@ describe("QueueItem Component Tests", () => {
     expect(screen.getByText(/Conversion failed/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
   });
+
+  it("Queued state — renders filename, shows waiting message, shows queued badge, shows cancel button", () => {
+    const job = makeJob({ status: "queued" });
+    render(<QueueItem job={job} onRemove={vi.fn()} />);
+
+    expect(screen.getByText("document.docx")).toBeInTheDocument();
+    expect(screen.getByText("waiting for slot...")).toBeInTheDocument();
+    expect(screen.getByText(/queued/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /run/i })).not.toBeInTheDocument();
+  });
 });

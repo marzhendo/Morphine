@@ -40,8 +40,14 @@ export function QueueItem({ job, onRemove }: { job: ConversionJob; onRemove: (id
           <p className="text-[11px] text-terminal-text truncate font-bold">
             {getFilename(job.inputPath)}
           </p>
-          {job.message && !isDone && (
-            <p className="text-[10px] text-terminal-dim truncate mt-0.5">{job.message}</p>
+          {job.status === "queued" ? (
+            <p className="text-[10px] text-terminal-dim truncate mt-0.5">
+              waiting for slot...
+            </p>
+          ) : (
+            job.message && !isDone && (
+              <p className="text-[10px] text-terminal-dim truncate mt-0.5">{job.message}</p>
+            )
           )}
           {isDone && job.outputPath && (
             <p className="text-[10px] text-terminal-accent truncate mt-0.5">
@@ -56,7 +62,7 @@ export function QueueItem({ job, onRemove }: { job: ConversionJob; onRemove: (id
         </div>
 
         {/* Status + actions */}
-        <StatusBadge status={isActive ? "converting" : job.status} />
+        <StatusBadge status={job.status} />
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {isDone && job.outputPath && (
