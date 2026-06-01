@@ -9,8 +9,11 @@ import { detectFormat, getAllowedOutputFormats, getEngine } from "@/lib/formatUt
 import type { ConversionJob } from "@/types/conversion";
 import { useToolStatus } from "@/hooks/useToolStatus";
 import { AboutDialog } from "@/components/layout/AboutDialog";
+import { useQueue } from "@/hooks/useQueue";
+import { QueueStatusBar } from "@/components/layout/QueueStatusBar";
 
 export default function App() {
+  useQueue(); // aktifkan queue processor
   const { addJob } = useConversionStore();
   const [aboutOpen, setAboutOpen] = useState(false);
 
@@ -58,6 +61,7 @@ export default function App() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-3">
           <ToolStatusBanner />
           <OutputDirSelector />
+          <QueueStatusBar />
           <ConversionQueue />
           <div className="no-drag">
             <DropZone onFilesDropped={handleFilesDropped} />

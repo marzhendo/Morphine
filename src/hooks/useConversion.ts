@@ -1,25 +1,29 @@
 import { useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { v4 as uuidv4 } from "uuid";
 import { useConversionStore } from "@/store/conversionStore";
 import type {
   ConversionJob,
-  ConversionJobPayload,
-  ConversionProgressEvent,
-  ConversionResultPayload,
   FileFormat,
 } from "@/types/conversion";
 import { detectFormat, resolveOutputPath, getEngine } from "@/lib/formatUtils";
 import { useSettingsStore } from "@/store/settingsStore";
 
 export function useConversion() {
-  const { addJob, updateProgress, setResult, setStatus } = useConversionStore();
+  const { addJob, setStatus, removeJob } = useConversionStore();
   const { settings } = useSettingsStore();
 
   const startConversion = useCallback(
     async (inputPath: string, outputFormat: FileFormat) => {
+      // Duplication Guard: Hapus job idle/error yang ada sebelumnya dengan inputPath yang sama
+      const existingJob = useConversionStore.getState().jobs.find(
+        (j) => j.inputPath === inputPath && (j.status === "idle" || j.status === "error")
+      );
+      if (existingJob) {
+        removeJob(existingJob.id);
+      }
+
       const id          = uuidv4();
       const inputFormat = detectFormat(inputPath);
       const outputDir = settings.defaultOutputDir === "custom" && settings.customOutputDir
@@ -27,6 +31,12 @@ export function useConversion() {
         : undefined;
       const outputPath  = resolveOutputPath(inputPath, outputFormat, outputDir);
       const engine      = getEngine(inputFormat, outputFormat);
+
+      const { jobs } = useConversionStore.getState();
+      const activeCount = jobs.filter(
+        (j) => j.status === "converting" || j.status === "queued"
+      ).length;
+      const { concurrentJobs } = settings;
 
       const job: ConversionJob = {
         id,
@@ -37,47 +47,12 @@ export function useConversion() {
         engine,
         status:    "queued",
         progress:  0,
-        message:   "Waiting...",
+        message:   activeCount >= concurrentJobs ? "waiting for slot..." : "queued",
         createdAt: Date.now(),
       };
       addJob(job);
-
-      const unlisten = await listen<ConversionProgressEvent>(
-        "conversion:progress",
-        (event) => {
-          if (event.payload.job_id === id) {
-            updateProgress(event.payload);
-          }
-        }
-      );
-
-      try {
-        setStatus(id, "converting");
-
-        const payload: ConversionJobPayload = {
-          id,
-          input_path:    inputPath,
-          output_path:   outputPath,
-          input_format:  inputFormat,
-          output_format: outputFormat,
-        };
-
-        const result = await invoke<ConversionResultPayload>("convert_file", {
-          job: payload,
-        });
-
-        setResult(result);
-      } catch (err) {
-        setResult({
-          job_id:  id,
-          success: false,
-          error:   err instanceof Error ? err.message : String(err),
-        });
-      } finally {
-        unlisten();
-      }
     },
-    [addJob, updateProgress, setResult, setStatus, settings]
+    [addJob, removeJob, settings]
   );
 
   const cancelConversion = useCallback(
