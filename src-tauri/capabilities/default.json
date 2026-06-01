@@ -9,6 +9,7 @@
     "shell:default",
     "shell:allow-open",
     "dialog:allow-open",
+    "http:default",
     {
       "identifier": "opener:allow-open-path",
       "allow": [

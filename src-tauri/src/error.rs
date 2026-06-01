@@ -10,4 +10,10 @@ pub enum MorphineError {
     ConversionFailed(String),
     #[error("Registry error: {0}")]
     RegistryError(String),
+    #[error("Download failed: {0}")]
+    DownloadFailed(String),
+    #[error("Install failed: {0}")]
+    InstallFailed(String),
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
 }
